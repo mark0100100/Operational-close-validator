@@ -190,7 +190,7 @@ Todas las reglas aplicables están satisfechas, los resultados están vigentes y
 
 #### Registrado → Validado
 
-Se produce cuando todas las reglas aplicables se ejecutan con resultado Satisfecho y no se genera una Alerta bloqueante.
+Se produce cuando todas las reglas aplicables quedan Satisfechas y no se genera una Alerta bloqueante.
 
 #### Registrado → Pendiente de soporte
 
@@ -237,14 +237,20 @@ Condiciones:
 - todas las reglas aplicables quedaron satisfechas;
 - no existe una Alerta bloqueante activa.
 
-#### Validado → estado no validado
+#### Revalidación que mantiene un estado no validado
+
+Cuando una corrección no resuelve todas las fallas, la revalidación puede cambiar el Evento Operativo entre Registrado, Pendiente de soporte, Pendiente de autorización y Con observaciones, según las reglas que continúen fallando.
+
+Una revalidación no fuerza la transición a Validado.
+
+#### Validado → Registrado
 
 Cuando cambian datos relevantes, evidencia o autorizaciones:
 
 1. los Resultados de Validación dependientes quedan no vigentes;
-2. el evento deja de cumplir las condiciones de Validado;
-3. una nueva validación determina si el estado resultante es Registrado, Pendiente de soporte, Pendiente de autorización, Con observaciones o, fuera del MVP, Pendiente de conciliación externa;
-4. el Cierre Operativo relacionado debe volver a evaluarse y puede quedar Bloqueado.
+2. el Evento Operativo pasa a Registrado porque debe ejecutar nuevamente sus validaciones aplicables;
+3. si el Cierre Operativo relacionado estaba Validado, vuelve a evaluarse y pasa a Bloqueado;
+4. una nueva validación determina si el evento pasa a Validado, Pendiente de soporte, Pendiente de autorización, Con observaciones o, fuera del MVP, Pendiente de conciliación externa.
 
 ## Máquina de estados de la Alerta
 
@@ -320,7 +326,7 @@ Una nueva inconsistencia posterior genera una nueva Alerta o una nueva ocurrenci
 ## Invariantes de comportamiento
 
 1. Todo Evento Operativo pertenece a un Cierre Operativo.
-2. Un Evento Operativo no puede quedar Validado si alguna regla aplicable está Fallida o no vigente.
+2. Un Evento Operativo no puede quedar Validado si algún Resultado de Validación aplicable tiene valor Fallida o no está vigente.
 3. Un Cierre Operativo no puede quedar Validado si contiene al menos un Evento Operativo cuyo estado no sea Validado.
 4. Un Cierre Operativo no puede quedar Validado si existe una Alerta bloqueante activa.
 5. Una corrección invalida los resultados dependientes antes de ejecutar una nueva validación.

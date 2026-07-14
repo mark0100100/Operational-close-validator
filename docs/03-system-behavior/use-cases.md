@@ -160,7 +160,7 @@ A2. El cierre está Enviado a contabilidad.
 
 - Existe un Evento Operativo en estado Registrado y vinculado al cierre, o la operación fue rechazada sin crear datos parciales.
 
-## UC-003 — Adjuntar Evidencia de Soporte
+## UC-003 — Adjuntar Evidencia de Soporte VR-001, VR-002 y VR-003.
 
 ### Objetivo
 
@@ -191,7 +191,9 @@ Usuario responsable.
 2. Adjunta o registra la referencia de la evidencia.
 3. El sistema vincula la evidencia al evento.
 4. El sistema invalida los Resultados de Validación dependientes de evidencia.
-5. El evento queda pendiente de revalidación.
+5. Si el evento estaba Validado, pasa a Registrado.
+6. Si el cierre relacionado estaba Validado, pasa a Bloqueado.
+7. El evento queda pendiente de revalidación.
 
 ### Flujos alternativos
 
@@ -242,7 +244,9 @@ Usuario responsable.
 2. Registra los datos de la autorización.
 3. El sistema vincula la Autorización al evento.
 4. El sistema invalida los Resultados de Validación dependientes de autorización.
-5. El evento queda pendiente de revalidación.
+5. Si el evento estaba Validado, pasa a Registrado.
+6. Si el cierre relacionado estaba Validado, pasa a Bloqueado.
+7. El evento queda pendiente de revalidación.
 
 ### Flujos alternativos
 
@@ -361,7 +365,7 @@ A1. Descartar una Alerta.
 
 - Reconocer una Alerta no corrige la causa.
 - Una Alerta no puede marcarse manualmente como Resuelta.
-- Resolver requiere un Resultado de Validación vigente y Satisfecho.
+- Resolver requiere una revalidación exitosa y un Resultado de Validación vigente asociado.
 - Descartar no cambia automáticamente el Evento Operativo a Validado.
 - Descartar no garantiza que el Cierre Operativo pueda avanzar.
 
@@ -488,7 +492,7 @@ Usuario responsable.
 4. Verifica que no existan Alertas bloqueantes activas.
 5. Verifica que todos los Resultados de Validación aplicables estén vigentes y satisfechos.
 6. Verifica que la consolidación esté completa y vigente.
-7. El control final queda Satisfecho.
+7. VR-008 queda Satisfecha.
 8. El sistema registra fecha, hora y responsable del envío.
 9. El cierre pasa a Enviado a contabilidad.
 
@@ -561,7 +565,7 @@ Falla:
 ## Reglas de aceptación transversal
 
 1. Ninguna acción protegida se ejecuta sin autenticación.
-2. Ningún Evento Operativo queda Validado con una regla aplicable Fallida o no vigente.
+2. Un Evento Operativo no puede quedar Validado si algún Resultado de validación aplicable tiene valor Fallida o no está vigente.
 3. Ninguna Alerta queda Resuelta sin revalidación exitosa.
 4. Ninguna Alerta queda Descartada sin autorización y justificación.
 5. Ningún Cierre Operativo queda Validado con un evento cuyo estado no sea Validado.
