@@ -1,7 +1,7 @@
 # Tesis del Producto
 
 **Versión:** v0.2
-**Estado:** Baseline aprobado
+**Estado:** Línea base aprobada
 **Producto:** Operational Close Validator
 
 ## Propósito

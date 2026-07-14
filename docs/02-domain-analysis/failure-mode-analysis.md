@@ -135,17 +135,17 @@ No puede detectar directamente un movimiento real que nunca fue registrado. Ese 
 
 **Regla relacionada:** VR-007.
 
-### FM-008 — Envío a contabilidad con eventos pendientes
+### FM-008 — Envío a contabilidad con eventos no validados
 
-**Descripción:** El cierre se envía a contabilidad con eventos pendientes, con observaciones o con una validación final desactualizada.
+**Descripción:** El cierre se envía a contabilidad cuando al menos un evento no se encuentra en estado Validado, existe una alerta bloqueante activa, hay resultados de validación aplicables fallidos o no vigentes, o la consolidación no está completa.
 
-**Causa probable:** una falla previa no fue detectada, una corrección invalidó resultados anteriores o no existió un control final obligatorio.
+**Causa probable:** una falla previa no fue detectada, una corrección invalidó resultados anteriores, la consolidación quedó desactualizada o no existió un control final obligatorio.
 
 **Detección actual:** contabilidad identifica el problema después del envío.
 
 **Impacto:** devolución, corrección, reenvío y pérdida de trazabilidad.
 
-**Oportunidad de validación:** ejecutar un control final que impida el envío mientras exista un evento pendiente, con observaciones o una alerta bloqueante.
+**Oportunidad de validación:** ejecutar un control final que exija que todos los eventos estén Validados, que no existan alertas bloqueantes activas, que los resultados aplicables estén vigentes y satisfechos, y que la consolidación esté completa.
 
 **Cobertura del MVP:** incluida.
 

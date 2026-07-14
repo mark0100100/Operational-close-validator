@@ -1,6 +1,6 @@
 # Operational Close Validator
 
-Early validation system for detecting unsupported, unauthorized, or inconsistent operational events before accounting close.
+Early validation system for detecting unsupported, unauthorized, or inconsistent operational events before operational close and submission to accounting.
 
 ## Problem
 

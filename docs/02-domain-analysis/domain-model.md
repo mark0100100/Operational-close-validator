@@ -312,7 +312,7 @@ Este estado pertenece al dominio completo y queda fuera del MVP v0.3.
 
 ### Bloqueado
 
-Existe al menos una inconsistencia crítica, un evento pendiente o una alerta bloqueante.
+Existe al menos una condición bloqueante: un evento que no superó las validaciones requeridas, un resultado obligatorio fallido o no vigente, o una alerta bloqueante activa.
 
 ### Enviado a contabilidad
 
@@ -331,7 +331,7 @@ Estados del MVP:
 3. Un evento que requiere evidencia no puede quedar Validado sin evidencia válida y legible.
 4. Un evento que requiere autorización no puede quedar Validado sin una autorización formal vinculada.
 5. Una modificación de datos relevantes invalida los resultados de validación anteriores.
-6. Un Cierre Operativo no puede quedar Validado si contiene un evento pendiente o con observaciones.
+6. Un Cierre Operativo no puede quedar Validado si contiene al menos un Evento Operativo cuyo estado no sea Validado.
 7. Un Cierre Operativo no puede quedar Validado si existe una alerta bloqueante activa.
 8. Un cierre solo puede enviarse a contabilidad desde Validado y después de ejecutar nuevamente la validación final.
 9. Si la validación final detecta una inconsistencia crítica, el envío se rechaza y el cierre queda Bloqueado.

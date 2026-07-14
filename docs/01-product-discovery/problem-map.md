@@ -1,7 +1,7 @@
 # Mapa de Problemas
 
 **Versión:** v0.2.1
-**Estado:** Baseline aprobado
+**Estado:** Línea base aprobada
 **Alcance:** Procesos de cierre operativo en pequeñas y medianas empresas
 
 ## Propósito
