@@ -302,7 +302,7 @@ El cierre está recibiendo eventos, evidencia, autorizaciones y correcciones.
 
 ### Validado
 
-Todos los eventos cumplen sus reglas, no existen alertas bloqueantes y la consolidación está completa.
+Todos los Eventos Operativos están Validados, no existen Alertas bloqueantes activas, todos los Resultados de Validación aplicables están vigentes y satisfechos, y la consolidación está completa.
 
 ### Provisional
 
@@ -312,7 +312,7 @@ Este estado pertenece al dominio completo y queda fuera del MVP v0.3.
 
 ### Bloqueado
 
-Existe al menos una condición bloqueante: un evento que no superó las validaciones requeridas, un resultado obligatorio fallido o no vigente, o una alerta bloqueante activa.
+Existe al menos una condición bloqueante: un Evento Operativo que no superó las validaciones requeridas, un Resultado de Validación obligatorio fallido o no vigente, una Alerta bloqueante activa, o una consolidación incompleta o desactualizada.
 
 ### Enviado a contabilidad
 
@@ -327,7 +327,7 @@ Estados del MVP:
 ## Invariantes del dominio
 
 1. Un Evento Operativo debe pertenecer a un Cierre Operativo.
-2. Un evento no puede quedar Validado si alguna regla aplicable está fallida.
+2. Un Evento Operativo no puede quedar Validado si algún Resultado de Validación aplicable tiene valor Fallida o no está vigente.
 3. Un evento que requiere evidencia no puede quedar Validado sin evidencia válida y legible.
 4. Un evento que requiere autorización no puede quedar Validado sin una autorización formal vinculada.
 5. Una modificación de datos relevantes invalida los resultados de validación anteriores.

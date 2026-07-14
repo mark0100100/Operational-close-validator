@@ -317,7 +317,7 @@ La selección del stack, el diseño de componentes, la estructura de la API y la
 
 ### Escenario B — Bloqueo por falta de soporte o autorización
 
-1. El usuario registra un evento incompleto.
+1. El usuario registra un Evento Operativo con todos los datos mínimos, pero sin la Evidencia de Soporte o Autorización formal requerida.
 2. VR-001, VR-003 o VR-006 queda Fallida, según corresponda.
 3. El evento pasa a Pendiente de soporte o Pendiente de autorización.
 4. Se genera una Alerta bloqueante.
@@ -337,7 +337,7 @@ La selección del stack, el diseño de componentes, la estructura de la API y la
 3. El evento pasa a Registrado cuando antes estaba Validado.
 4. El usuario ejecuta nuevamente la validación.
 5. La Alerta solo queda Resuelta cuando la revalidación es exitosa.
-6. La consolidación se ejecuta nuevamente.
+6. Si la corrección afectó una consolidación existente, esta queda no vigente y debe ejecutarse nuevamente.
 
 ### Escenario E — Envío exitoso
 
@@ -364,7 +364,7 @@ La selección del stack, el diseño de componentes, la estructura de la API y la
 4. Ningún cierre queda Validado con una Alerta bloqueante activa.
 5. Toda modificación relevante invalida los resultados dependientes.
 6. Una Alerta solo queda Resuelta después de una revalidación exitosa.
-7. Una Alerta Descartada conserva autorización y justificación.
+7. Una Alerta Descartada requiere una acción autorizada y conserva la justificación, la fecha y el responsable.
 8. Una corrección que afecta la consolidación exige consolidar nuevamente.
 9. VR-008 se ejecuta inmediatamente antes del envío.
 10. Una falla de VR-008 rechaza el envío y coloca el cierre en Bloqueado.
