@@ -1,8 +1,11 @@
 # ADR-0001: La validación final puede devolver un cierre validado a bloqueado
 
 **Estado:** Aceptada
-**Estado documental:** Pendiente de incorporación y congelamiento en GitHub
+
+**Estado documental:** Línea base aprobada e incorporada en el repositorio
+
 **Fecha:** 2026-07-14
+
 **Producto:** Operational Close Validator
 
 ## Contexto

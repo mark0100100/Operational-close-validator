@@ -1,8 +1,11 @@
 # Modelo de Dominio
 
 **Versión:** v0.3
+
 **Estado:** Línea base aprobada
+
 **Fase:** 02 — Análisis de dominio
+
 **Producto:** Operational Close Validator
 
 ## Propósito

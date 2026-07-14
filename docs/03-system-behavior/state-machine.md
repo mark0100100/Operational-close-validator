@@ -1,8 +1,11 @@
 # Máquina de Estados
 
 **Versión:** v0.3
+
 **Estado:** Línea base aprobada
+
 **Fase:** 03 — Comportamiento del sistema
+
 **Producto:** Operational Close Validator
 
 ## Propósito

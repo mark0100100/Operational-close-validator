@@ -1,8 +1,11 @@
 # Análisis de Modos de Falla
 
 **Versión:** v0.1
+
 **Estado:** Línea base aprobada
+
 **Fase:** 02 — Análisis de dominio
+
 **Producto:** Operational Close Validator
 
 ## Propósito

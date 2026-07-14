@@ -1,8 +1,11 @@
 # Alcance del MVP
 
 **Versión:** v0.3
+
 **Estado:** Línea base aprobada
+
 **Fase:** 04 — Alcance del producto
+
 **Producto:** Operational Close Validator
 
 ## Propósito

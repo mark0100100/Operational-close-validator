@@ -1,7 +1,9 @@
 # Flujo Actual
 
 **Versión:** v0.2
+
 **Estado:** Línea base aprobada
+
 **Proceso:** Cierre operativo diario de caja
 
 ## Propósito

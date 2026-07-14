@@ -1,8 +1,11 @@
 # Reglas de Validación
 
 **Versión:** v0.2
+
 **Estado:** Línea base aprobada
+
 **Fase:** 02 — Análisis de dominio
+
 **Producto:** Operational Close Validator
 
 ## Propósito

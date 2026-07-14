@@ -1,8 +1,11 @@
 # Casos de Uso
 
 **Versión:** v0.2
+
 **Estado:** Línea base aprobada
+
 **Fase:** 03 — Comportamiento del sistema
+
 **Producto:** Operational Close Validator
 
 ## Propósito

@@ -1,7 +1,9 @@
 # Declaración del Problema
 
 **Versión:** v0.2
+
 **Estado:** Línea base aprobada
+
 **Clúster seleccionado:** C-001 — Inconsistencias operativas durante procesos críticos de cierre
 
 ## Problema principal
