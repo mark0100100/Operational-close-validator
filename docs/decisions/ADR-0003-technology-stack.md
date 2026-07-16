@@ -4,7 +4,7 @@
 
 **Estado documental:** Borrador
 
-**Fecha:** 2026-07-15
+**Fecha:** 2026-07-16
 
 **Producto:** Operational Close Validator
 
@@ -108,38 +108,48 @@ Una alternativa que incumpla una restricción obligatoria queda descartada, inde
 | Dimensión | Información |
 |---|---|
 | Implementadores efectivos | 1 |
+| Disponibilidad | 30–35 horas por semana |
 | Sistema operativo principal | Windows con PowerShell |
 | Tipo de producto | MVP web demostrable y producto de portafolio |
 | Arquitectura aprobada | Monolito modular por capacidades con puertos y adaptadores |
 | Persistencia requerida | Relacional |
 | Topología requerida | Una unidad desplegable de aplicación |
 | Curva de aprendizaje aceptable | Moderada |
-| Prioridad operativa | Implementación reproducible y despliegue simple |
+| Experiencia con pruebas automatizadas | 3 — Proyecto propio funcional |
+| Experiencia desplegando aplicaciones web | 3 — Proyecto propio funcional |
+| Presupuesto mensual máximo | Aproximadamente USD 500 |
+| Objetivo profesional prioritario | Construir proyectos de portafolio técnicamente sólidos, desplegables y demostrables, que evidencien arquitectura, pruebas, persistencia y prácticas profesionales |
 
-### 5.2. Datos pendientes del implementador
+### 5.2. Experiencia por tecnología
 
-Los siguientes datos deben completarse antes de aceptar la ADR:
+Escala utilizada:
 
-| Dimensión | Información |
-|---|---|
-| Horas disponibles por semana | [COMPLETAR] |
-| Experiencia con Python | [COMPLETAR] |
-| Experiencia con Django | [COMPLETAR] |
-| Experiencia con TypeScript | [COMPLETAR] |
-| Experiencia con Node.js | [COMPLETAR] |
-| Experiencia con React | [COMPLETAR] |
-| Experiencia con Java | [COMPLETAR] |
-| Experiencia con Spring Boot | [COMPLETAR] |
-| Experiencia con pruebas automatizadas | [COMPLETAR] |
-| Experiencia con despliegue de aplicaciones web | [COMPLETAR] |
-| Presupuesto mensual máximo | [COMPLETAR] |
-| Objetivo profesional prioritario | [COMPLETAR] |
+- 0 — Ninguna.
+- 1 — Conceptos básicos o cursos.
+- 2 — Proyectos guiados.
+- 3 — Proyecto propio funcional.
+- 4 — Experiencia laboral o proyectos complejos.
+- 5 — Dominio autónomo.
 
-Mientras estos datos no estén confirmados:
+| Tecnología | Nivel | Evidencia |
+|---|---:|---|
+| Python | 3 | Proyecto propio funcional |
+| Django | 2 | Proyectos guiados |
+| TypeScript | 3 | Proyecto propio funcional |
+| Node.js | 3 | Proyecto propio funcional |
+| React | 2 | Proyectos guiados |
+| Java | 2 | Proyectos guiados |
+| Spring Boot | 3 | Proyecto propio funcional |
 
-- TS-010 no puede utilizarse para favorecer una alternativa;
-- TS-012 solo puede evaluarse de forma preliminar;
-- no puede aceptarse una decisión final basada en productividad o curva de aprendizaje.
+### 5.3. Interpretación del perfil
+
+- La disponibilidad semanal permite asumir una curva de aprendizaje moderada, pero no justifica introducir complejidad sin un impulsor aprobado.
+- Ninguna alternativa dispone de una ventaja decisiva por experiencia: las tres se encuentran entre nivel guiado y proyecto propio.
+- Spring Boot cuenta con experiencia práctica directa de nivel 3, aunque Java permanece en nivel 2.
+- TypeScript y Node.js cuentan con nivel 3, pero React permanece en nivel 2 y añade una segunda cadena de construcción.
+- Python cuenta con nivel 3 y Django con nivel 2.
+- El presupuesto no discrimina entre las alternativas mientras se conserve una sola unidad desplegable y una base relacional administrada de costo moderado.
+- El objetivo profesional favorece una solución que haga visibles arquitectura, transacciones, pruebas y límites de dependencias, sin sacrificar la viabilidad del MVP.
 
 ---
 
@@ -359,209 +369,359 @@ Spring proporciona inyección de dependencias y composición de componentes. Par
 
 ---
 
-## 8. Evaluación preliminar
+## 8. Evaluación comparativa
 
-### 8.1. Estado de la evaluación
+### 8.1. Matriz de puntuación
 
-La evaluación cuantitativa final permanece pendiente porque TS-006, TS-010 y TS-012 dependen de información no confirmada del implementador.
+| Criterio | Prioridad | Peso | A. Django | B. NestJS + React | C. Spring Boot |
+|---|---:|---:|---:|---:|---:|
+| TS-001 — Consistencia y concurrencia relacional | Crítica | 5 | 4 | 4 | 4 |
+| TS-002 — Persistencia relacional | Crítica | 5 | 5 | 4 | 5 |
+| TS-003 — Modularidad y dependencias | Alta | 3 | 3 | 4 | 4 |
+| TS-004 — Testabilidad | Alta | 3 | 4 | 4 | 5 |
+| TS-005 — Una unidad desplegable | Alta | 3 | 5 | 4 | 5 |
+| TS-006 — Productividad | Alta | 3 | 4 | 4 | 4 |
+| TS-007 — Ecosistema web y seguridad | Alta | 3 | 5 | 5 | 5 |
+| TS-008 — Despliegue reproducible | Alta | 3 | 4 | 4 | 4 |
+| TS-009 — Herramientas de desarrollo | Alta | 3 | 4 | 5 | 5 |
+| TS-010 — Experiencia actual | Alta | 3 | 3 | 3 | 3 |
+| TS-011 — Valor profesional y aprendizaje | Media | 1 | 4 | 5 | 5 |
+| TS-012 — Costo operativo | Media | 1 | 5 | 5 | 5 |
 
-No se asignará una puntuación total definitiva hasta completar el perfil del proyecto.
-
-### 8.2. Evaluación técnica preliminar sin experiencia personal
+### 8.2. Puntuación ponderada
 
 | Criterio | Peso | A. Django | B. NestJS + React | C. Spring Boot |
 |---|---:|---:|---:|---:|
-| TS-001 — Consistencia y concurrencia relacional | 5 | 4 | 4 | 4 |
-| TS-002 — Persistencia relacional | 5 | 5 | 4 | 5 |
-| TS-003 — Modularidad y dependencias | 3 | 3 | 4 | 4 |
-| TS-004 — Testabilidad | 3 | 4 | 4 | 5 |
-| TS-005 — Una unidad desplegable | 3 | 5 | 4 | 5 |
-| TS-007 — Ecosistema web y seguridad | 3 | 5 | 5 | 5 |
-| TS-008 — Despliegue reproducible | 3 | 4 | 4 | 4 |
-| TS-009 — Herramientas de desarrollo | 3 | 4 | 5 | 5 |
-| TS-011 — Valor profesional y aprendizaje | 1 | 4 | 5 | 4 |
+| TS-001 | 5 | 20 | 20 | 20 |
+| TS-002 | 5 | 25 | 20 | 25 |
+| TS-003 | 3 | 9 | 12 | 12 |
+| TS-004 | 3 | 12 | 12 | 15 |
+| TS-005 | 3 | 15 | 12 | 15 |
+| TS-006 | 3 | 12 | 12 | 12 |
+| TS-007 | 3 | 15 | 15 | 15 |
+| TS-008 | 3 | 12 | 12 | 12 |
+| TS-009 | 3 | 12 | 15 | 15 |
+| TS-010 | 3 | 9 | 9 | 9 |
+| TS-011 | 1 | 4 | 5 | 5 |
+| TS-012 | 1 | 5 | 5 | 5 |
+| **Total** |  | **150** | **149** | **160** |
 
-Esta tabla no incluye:
-
-- TS-006 — Productividad;
-- TS-010 — Experiencia actual;
-- TS-012 — Costo operativo.
-
-Por lo tanto, no determina todavía la decisión.
-
-### 8.3. Justificación técnica preliminar
+### 8.3. Justificación de puntuaciones
 
 #### TS-001 — Consistencia y concurrencia relacional
 
-Las tres alternativas permiten definir un límite local de consistencia dentro de una sola aplicación. La garantía concreta depende del adaptador relacional y del mecanismo de concurrencia que seleccione ADR-0004.
+Las tres alternativas permiten definir un límite local de consistencia dentro de una sola aplicación.
+
+Ninguna recibe puntuación 5 porque el mecanismo concreto depende de ADR-0004, que deberá seleccionar persistencia, bloqueo, aislamiento y reintentos.
 
 #### TS-002 — Persistencia relacional
 
-Los tres ecosistemas disponen de alternativas maduras para persistencia relacional. La puntuación de NestJS es ligeramente menor porque el framework no integra una estrategia relacional única y será necesario seleccionar y componer un adaptador concreto.
+Django y Spring Boot disponen de una integración relacional central y ampliamente utilizada dentro de sus ecosistemas.
+
+NestJS no define una estrategia relacional única; requiere seleccionar y componer un adaptador adicional. Esto no impide cumplir el criterio, pero incrementa las decisiones y pruebas necesarias.
 
 #### TS-003 — Modularidad y dirección de dependencias
 
-Django permite la separación, pero su estructura habitual no protege automáticamente el Dominio.
+Django permite organizar paquetes por capacidad, pero su estructura habitual no protege automáticamente la separación entre Dominio, Aplicación y modelos persistentes.
 
-NestJS y Spring proporcionan mecanismos de módulos o composición que facilitan organizar adaptadores y dependencias, sin garantizar por sí mismos la arquitectura aprobada.
+NestJS y Spring Boot proporcionan mecanismos de composición e inyección de dependencias que facilitan materializar adaptadores y contratos. En ambos casos, los límites deben protegerse mediante estructura y pruebas arquitectónicas.
 
 #### TS-004 — Testabilidad
 
 Los tres lenguajes permiten probar el Dominio sin framework.
 
-Spring dispone de un ecosistema especialmente amplio para pruebas unitarias, integración y arquitectura. NestJS y Django también permiten una estrategia completa cuando el núcleo permanece desacoplado.
+Spring Boot obtiene una puntuación mayor porque el ecosistema permite combinar pruebas unitarias, pruebas por segmento, integración y pruebas contra infraestructura real dentro de una estrategia consistente.
 
-#### TS-005 — Una sola unidad desplegable
+#### TS-005 — Una unidad desplegable
 
-Django y Spring Boot integran naturalmente backend e interfaz renderizada en servidor.
+Django y Spring Boot integran backend e interfaz renderizada en servidor mediante una sola cadena principal de construcción.
 
-NestJS y React también pueden formar una sola versión desplegada, pero requieren construir primero la interfaz y copiar o incluir sus recursos estáticos en el paquete de la aplicación.
+NestJS y React también pueden formar una sola versión desplegada, pero requieren construir el cliente por separado e incorporar los recursos resultantes en el paquete del backend.
+
+#### TS-006 — Productividad
+
+Las tres alternativas reciben puntuación 4:
+
+- existe disponibilidad de 30–35 horas por semana;
+- el implementador tiene experiencia entre nivel 2 y 3 en cada ecosistema;
+- ninguna alternativa exige comenzar desde cero;
+- todas requieren disciplina adicional para implementar ADR-0002 correctamente.
+
+No se asigna puntuación 5 porque ninguna tecnología se encuentra en nivel 4 o 5 de experiencia.
 
 #### TS-007 — Ecosistema web y seguridad
 
-Los tres ecosistemas cuentan con herramientas suficientes para implementar el alcance del MVP. La estrategia concreta de autenticación permanece fuera de esta ADR.
+Los tres ecosistemas ofrecen herramientas suficientes para interfaz web, validación, seguridad y pruebas.
+
+La estrategia concreta de autenticación permanece fuera de esta ADR.
 
 #### TS-008 — Despliegue reproducible
 
-Las tres alternativas permiten fijar versiones, automatizar builds y producir paquetes o imágenes reproducibles. El proveedor y formato final se decidirán posteriormente.
+Las tres alternativas permiten fijar versiones y producir un paquete o imagen reproducible.
+
+La puntuación no presupone un proveedor de despliegue concreto.
 
 #### TS-009 — Herramientas de desarrollo
 
-Los tres ecosistemas ofrecen build, depuración y pruebas. TypeScript y Java proporcionan comprobaciones estáticas más estrictas; Python compensa parcialmente mediante herramientas de tipado y análisis opcionales.
+TypeScript y Java proporcionan comprobaciones estáticas integradas y ecosistemas de build y pruebas consolidados.
+
+Python dispone de herramientas equivalentes, pero parte del tipado y análisis debe configurarse de forma adicional.
+
+#### TS-010 — Experiencia actual
+
+Las tres alternativas reciben puntuación 3:
+
+- Django combina Python nivel 3 con Django nivel 2;
+- NestJS + React combina TypeScript y Node.js nivel 3 con React nivel 2;
+- Spring Boot combina Spring Boot nivel 3 con Java nivel 2.
+
+No existe una diferencia suficiente para alterar la decisión por experiencia.
 
 #### TS-011 — Valor profesional y aprendizaje
 
-Las tres alternativas aportan valor profesional. TypeScript con NestJS y React cubre backend, interfaz y contratos tipados en un solo lenguaje, pero este criterio no puede prevalecer sobre productividad, experiencia o consistencia.
+NestJS + React y Spring Boot permiten evidenciar con claridad arquitectura modular, contratos, pruebas y separación de responsabilidades.
+
+Django también aporta valor profesional, pero requiere más esfuerzo documental para evitar que el diseño parezca una aplicación centrada en el framework.
+
+#### TS-012 — Costo operativo
+
+El presupuesto aproximado de USD 500 mensuales es suficiente para las tres alternativas bajo la topología aprobada.
+
+El proveedor y costo final se decidirán posteriormente.
 
 ---
 
 ## 9. Decisión
 
-**Pendiente.**
+Se adopta:
 
-La ADR no puede aceptarse hasta completar:
+**Alternativa C — Java + Spring Boot + Thymeleaf.**
 
-1. experiencia real del implementador;
-2. horas disponibles por semana;
-3. presupuesto operativo;
-4. puntuaciones TS-006, TS-010 y TS-012;
-5. puntuación ponderada total;
-6. justificación de la alternativa ganadora.
+### 9.1. Stack seleccionado
 
-La decisión final deberá adoptar una de estas formas:
+| Componente | Decisión |
+|---|---|
+| Lenguaje | Java |
+| Runtime | Versión LTS de Java soportada por la línea de Spring Boot seleccionada |
+| Backend | Spring Boot con Spring MVC |
+| Interfaz | Thymeleaf + HTML + CSS + JavaScript |
+| Comunicación principal | Formularios HTTP y respuestas HTML |
+| Comunicación adicional | Endpoints HTTP/JSON únicamente cuando un caso de uso lo requiera |
+| Construcción | Maven |
+| Pruebas unitarias | JUnit Jupiter + Mockito |
+| Pruebas de integración | Herramientas de prueba de Spring Boot |
+| Unidad desplegable | Aplicación Spring Boot que contiene backend, plantillas y recursos web |
 
-```text
-Alternativa A — Python + Django + Django Templates
-Alternativa B — TypeScript + Node.js LTS + NestJS + React + Vite
-Alternativa C — Java + Spring Boot + Thymeleaf
-```
+### 9.2. Decisiones deliberadamente pendientes
 
-No se seleccionarán todavía:
+Esta ADR no selecciona:
 
-- ORM;
-- motor de base de datos;
-- aislamiento transaccional;
-- estrategia de concurrencia;
+- motor relacional;
+- ORM o biblioteca de acceso a datos;
+- herramienta de migraciones;
+- nivel de aislamiento;
+- mecanismo de bloqueo;
+- estrategia concreta de reintentos;
+- mecanismo de autenticación y sesión;
 - proveedor de despliegue.
 
----
+Estas decisiones corresponden a ADR-0004, ADR-0005 y documentos técnicos posteriores.
 
-## 10. Reglas tecnológicas independientes de la alternativa
+### 9.3. Política de versiones
 
-Las siguientes reglas aplican a cualquier alternativa seleccionada:
+Al iniciar la implementación se fijarán:
 
-1. El Dominio no depende del framework web.
-2. El Dominio no depende de ORM, drivers ni modelos persistentes.
-3. Los controladores o vistas actúan como adaptadores de entrada.
-4. Los casos de uso residen en Aplicación.
-5. Aplicación define puertos de salida.
-6. Infraestructura implementa los adaptadores concretos.
-7. VR-008 se coordina desde un caso de uso y no desde un controlador.
-8. La tecnología relacional concreta se selecciona en ADR-0004.
-9. Backend e interfaz forman una sola versión desplegada.
-10. Las versiones mayores del runtime y frameworks quedan fijadas en configuración reproducible.
-11. Se utilizan únicamente versiones soportadas al iniciar la implementación.
-12. Las pruebas del Dominio se ejecutan sin servidor web ni base de datos.
-13. Las pruebas de adaptadores se separan de las pruebas del Dominio.
-14. Los límites arquitectónicos se verifican automáticamente.
-15. El stack no autoriza ampliar el alcance funcional del MVP.
+- una versión LTS de Java;
+- una línea estable y soportada de Spring Boot compatible con esa versión;
+- versiones gestionadas mediante Maven;
+- versiones exactas registradas en configuración reproducible y automatización.
+
+No se seleccionará automáticamente la versión más reciente si no existe compatibilidad verificada con las dependencias requeridas.
 
 ---
 
-## 11. Estrategia general de construcción y pruebas
+## 10. Fundamento
 
-### 11.1. Construcción
+La alternativa C obtiene la mayor puntuación ponderada:
 
-El proceso de construcción deberá producir:
+```text
+A. Python + Django + Django Templates:              150
+B. TypeScript + NestJS + React + Vite:              149
+C. Java + Spring Boot + Thymeleaf:                   160
+```
 
-1. backend compilado o preparado para ejecución;
-2. recursos de la interfaz web;
-3. un único paquete, directorio o imagen de despliegue;
-4. configuración externa mediante variables de entorno;
-5. instrucciones reproducibles para desarrollo y producción.
+La diferencia se concentra en:
 
-La forma física exacta del artefacto se definirá en la estrategia de despliegue.
+- testabilidad;
+- integración relacional;
+- herramientas de desarrollo;
+- construcción natural de una sola unidad desplegable;
+- ajuste del ecosistema a límites transaccionales explícitos.
 
-### 11.2. Pruebas
+La experiencia del implementador no fuerza la decisión, pero la hace viable: existe un proyecto propio funcional con Spring Boot y disponibilidad de 30–35 horas semanales.
 
-La estrategia mínima deberá distinguir:
+Thymeleaf se selecciona sobre una SPA porque el MVP aprobado está compuesto principalmente por:
 
-| Nivel | Objetivo |
+- formularios;
+- consultas de estado;
+- registro y corrección de eventos;
+- gestión de alertas;
+- consolidación;
+- envío interno.
+
+No existe un requisito aprobado que necesite estado complejo en el cliente, navegación autónoma o sincronización intensiva de una SPA.
+
+La decisión no se toma por prestigio tecnológico. Se toma porque la alternativa C obtiene la mayor puntuación bajo la regla definida antes de evaluar.
+
+---
+
+## 11. Aplicación de ADR-0002 al stack seleccionado
+
+### 11.1. Separación de responsabilidades
+
+```text
+Adaptadores de entrada
+Spring MVC Controllers
+        ↓
+Aplicación
+Casos de uso y puertos
+        ↓
+Dominio
+Entidades, reglas e invariantes
+
+Adaptadores de salida
+Persistencia, reloj, evidencia y autenticación
+        ↓ implementan
+Puertos definidos por Aplicación
+```
+
+### 11.2. Restricciones de dependencia
+
+- El Dominio utiliza Java sin dependencias de Spring.
+- El Dominio no contiene anotaciones de Spring, persistencia ni serialización.
+- Los controladores Spring MVC actúan como adaptadores de entrada.
+- Los casos de uso residen en Aplicación.
+- Aplicación define contratos mediante interfaces Java cuando existe una necesidad real.
+- Infraestructura implementa los contratos y participa en el ensamblaje de Spring.
+- Thymeleaf pertenece a Presentación.
+- Las transacciones se aplican al límite del caso de uso y no a los controladores.
+- VR-008 se coordina desde Aplicación.
+- Las pruebas arquitectónicas detectan dependencias prohibidas.
+
+### 11.3. Unidad desplegable
+
+El proceso de construcción debe producir:
+
+1. código compilado de la aplicación;
+2. plantillas Thymeleaf;
+3. recursos estáticos;
+4. configuración externa;
+5. un único paquete o imagen de despliegue.
+
+La base de datos y el almacenamiento físico de Evidencias de Soporte permanecen como dependencias externas de Infraestructura.
+
+---
+
+## 12. Estrategia general de pruebas
+
+| Nivel | Herramienta o enfoque |
 |---|---|
-| Dominio | Reglas, invariantes y transiciones sin framework |
-| Aplicación | Casos de uso mediante dobles de puertos |
-| Adaptadores | Persistencia, HTTP, sesión y almacenamiento |
-| Integración | Composición de módulos y recursos reales controlados |
-| Extremo a extremo | Flujos críticos observables del MVP |
-| Arquitectura | Dependencias prohibidas, ciclos y límites de módulos |
+| Dominio | JUnit Jupiter sin contexto de Spring |
+| Aplicación | JUnit Jupiter + Mockito o dobles manuales |
+| Adaptadores web | Pruebas de Spring MVC |
+| Adaptadores de persistencia | Pruebas de integración contra el motor real seleccionado |
+| Integración | Contexto controlado de Spring Boot |
+| Extremo a extremo | Flujos críticos sobre la aplicación desplegada |
+| Arquitectura | Reglas automatizadas de dependencias y ciclos |
 
-Las herramientas exactas dependerán de la alternativa seleccionada.
+Las pruebas del Dominio no deben cargar el contexto de Spring.
 
----
-
-## 12. Consecuencias de mantener la decisión pendiente
-
-### Consecuencias positivas
-
-- Evita justificar una preferencia mediante puntuaciones artificiales.
-- Conserva el límite entre stack y persistencia.
-- Permite evaluar productividad con datos reales.
-- Mantiene comparables las alternativas.
-- Evita fijar tecnologías de infraestructura antes de ADR-0004.
-
-### Costos
-
-- ADR-0003 no puede aceptarse todavía.
-- ADR-0004 no debe iniciarse hasta seleccionar el ecosistema.
-- Es necesario completar el perfil del implementador.
-- La estructura física del repositorio de código permanece pendiente.
+Las pruebas de persistencia no sustituyen las pruebas del Dominio.
 
 ---
 
-## 13. Criterios de aceptación de ADR-0003
+## 13. Consecuencias positivas
 
-La ADR podrá pasar a **Aceptada** cuando:
-
-1. el perfil del implementador esté completo;
-2. las tres alternativas sean comparables;
-3. todas cumplan las restricciones obligatorias o se descarte explícitamente la que no cumpla;
-4. todos los criterios tengan puntuación y justificación;
-5. los cálculos ponderados sean correctos;
-6. la alternativa seleccionada coincida con la regla de selección;
-7. cualquier excepción esté definida y justificada previamente;
-8. no se seleccione ORM ni motor relacional;
-9. no se decida todavía el mecanismo de concurrencia;
-10. la unidad desplegable esté claramente definida;
-11. el Dominio permanezca independiente de frameworks;
-12. las afirmaciones comparativas estén vinculadas al proyecto;
-13. las versiones se rijan por una política de soporte;
-14. el documento no amplíe el alcance del MVP.
+- Una sola cadena principal de construcción.
+- Backend e interfaz integrados en la misma aplicación.
+- Ecosistema adecuado para límites transaccionales explícitos.
+- Buen soporte para pruebas unitarias, integración y arquitectura.
+- Tipado estático en el backend.
+- Menor complejidad de interfaz que una SPA.
+- Coherencia directa con la unidad desplegable aprobada.
+- Viabilidad respaldada por experiencia previa con Spring Boot.
+- Capacidad de producir un proyecto de portafolio con arquitectura y pruebas visibles.
 
 ---
 
-## 14. Documentos relacionados
+## 14. Consecuencias y costos
+
+- Java permanece en nivel 2 de experiencia y exige consolidación práctica.
+- Spring Boot puede introducir acoplamiento si sus anotaciones se filtran al Dominio.
+- Thymeleaf limita la autonomía del cliente frente a una SPA.
+- Interacciones avanzadas pueden requerir JavaScript específico.
+- La aplicación debe evitar clases de servicio genéricas que mezclen Aplicación, Dominio e Infraestructura.
+- La selección no resuelve persistencia, concurrencia ni autenticación.
+- Es necesario mantener pruebas arquitectónicas.
+- La JVM puede requerir mayor memoria que otras alternativas; el dimensionamiento se resolverá en la estrategia de despliegue.
+- El uso de Spring no autoriza introducir microservicios ni componentes distribuidos.
+
+---
+
+## 15. Alternativas descartadas
+
+### 15.1. Python + Django + Django Templates
+
+Se descarta porque obtiene una puntuación inferior en:
+
+- modularidad y dirección de dependencias;
+- testabilidad por niveles;
+- herramientas de análisis estático;
+- protección explícita frente al acoplamiento entre Dominio y ORM.
+
+La alternativa sigue siendo viable y productiva, pero requiere mayor disciplina para materializar ADR-0002 sin adaptar el Dominio a los modelos del framework.
+
+### 15.2. TypeScript + NestJS + React + Vite
+
+Se descarta porque:
+
+- obtiene una puntuación total ligeramente inferior;
+- requiere dos cadenas de construcción;
+- React se encuentra en nivel 2 de experiencia;
+- no existe un requisito aprobado que justifique una SPA;
+- la persistencia relacional exige una selección adicional no integrada por el framework.
+
+La alternativa sigue siendo técnicamente válida. Se reconsideraría si apareciera un impulsor aprobado que requiera una interfaz cliente rica o contratos compartidos en TypeScript.
+
+---
+
+## 16. Criterios de cumplimiento
+
+La decisión se considera correctamente aplicada cuando:
+
+1. el código del Dominio es Java sin dependencias de Spring;
+2. los casos de uso residen en Aplicación;
+3. los controladores Spring MVC delegan en casos de uso;
+4. Thymeleaf se limita a Presentación;
+5. Aplicación define los puertos requeridos;
+6. Infraestructura implementa los adaptadores;
+7. las transacciones no se coordinan desde controladores;
+8. VR-008 se ejecuta desde un caso de uso;
+9. las pruebas del Dominio no cargan Spring;
+10. backend, plantillas y recursos forman una sola versión desplegada;
+11. las versiones exactas están fijadas en Maven y configuración reproducible;
+12. se utiliza una versión soportada de Java y Spring Boot;
+13. no se selecciona persistencia fuera de ADR-0004;
+14. no se selecciona autenticación fuera de ADR-0005;
+15. las dependencias prohibidas se verifican automáticamente;
+16. el stack no amplía el alcance funcional del MVP.
+
+---
+
+## 17. Documentos relacionados
 
 - ADR-0002 — Estilo arquitectónico de la aplicación.
+- ADR-0004 — Estrategia de persistencia y control de concurrencia.
 - Architecture Drivers v0.1 — Impulsores de Arquitectura.
 - Validation Rules v0.2 — Reglas de Validación.
 - Domain Model v0.3 — Modelo de Dominio.
@@ -572,29 +732,27 @@ La ADR podrá pasar a **Aceptada** cuando:
 
 ---
 
-## 15. Control de cambios
+## 18. Control de cambios
 
 Modificar esta decisión requiere:
 
 1. identificar el impulsor o dato de perfil que cambió;
 2. reevaluar los criterios afectados;
-3. recalcular la matriz cuando corresponda;
-4. registrar una nueva ADR si la decisión aceptada debe sustituirse;
-5. actualizar los diseños técnicos afectados;
-6. incorporar los cambios mediante revisión.
+3. recalcular la matriz;
+4. registrar una nueva ADR que sustituya o modifique esta decisión;
+5. actualizar ADR-0004 y los diseños técnicos afectados;
+6. incorporar el cambio mediante revisión.
 
 ---
 
-## 16. Conclusión
+## 19. Conclusión
 
-ADR-0003 queda estructuralmente preparada para seleccionar el stack tecnológico del MVP, pero la decisión final permanece pendiente porque faltan datos verificables sobre experiencia, disponibilidad y presupuesto del implementador.
+El stack tecnológico seleccionado para Operational Close Validator es:
 
-Las alternativas comparables son:
+**Java + Spring Boot + Spring MVC + Thymeleaf + Maven.**
 
-- Python + Django + Django Templates;
-- TypeScript + Node.js LTS + NestJS + React + Vite;
-- Java + Spring Boot + Thymeleaf.
+La decisión respeta el monolito modular por capacidades aprobado en ADR-0002, mantiene una sola unidad desplegable y proporciona una base adecuada para pruebas, transacciones y persistencia relacional.
 
-La selección se realizará mediante restricciones obligatorias, criterios ponderados y datos reales del proyecto.
+La selección de motor relacional, adaptador de persistencia, migraciones y mecanismo de concurrencia permanece en ADR-0004.
 
-Hasta completar esa evaluación no se acepta un stack, no se selecciona ORM, no se selecciona motor relacional y no se define el mecanismo concreto de concurrencia.
+El documento continúa como propuesta hasta completar la revisión de coherencia y registrar formalmente su aceptación.
