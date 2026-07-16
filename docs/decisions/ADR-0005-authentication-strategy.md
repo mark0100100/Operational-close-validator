@@ -1,8 +1,8 @@
 # ADR-0005: Estrategia de autenticación y sesión
 
-**Estado:** Propuesta
+**Estado:** Aceptada
 
-**Estado documental:** Borrador
+**Estado documental:** Línea base aprobada
 
 **Fecha:** 2026-07-16
 
