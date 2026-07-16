@@ -309,7 +309,7 @@ Se adopta:
 El MVP utilizará:
 
 - una sola base de datos relacional;
-- una sola conexión lógica de la aplicación a esa base;
+- una sola fuente de datos lógica, administrada mediante un pool de conexiones;
 - propiedad lógica de datos por módulo;
 - transacciones locales;
 - ausencia de bases de datos independientes por módulo;
@@ -430,7 +430,7 @@ El caso de uso de envío ejecuta este protocolo:
    a. rechazar el envío;
    b. registrar el Resultado de Validación fallido;
    c. registrar causa y entidades afectadas;
-   d. pasar el cierre de Validado a Bloqueado cuando corresponda;
+   d. cambiar el cierre de Validado a Bloqueado;
    e. persistir la trazabilidad;
    f. confirmar la transacción sin registrar un envío exitoso.
 7. Si VR-008 se satisface:
@@ -443,6 +443,8 @@ El caso de uso de envío ejecuta este protocolo:
 ```
 
 Mientras la transacción conserva el bloqueo del cierre, ninguna operación que respete esta ADR puede modificar información relevante para VR-008.
+
+Un fallo de VR-008 deja el cierre Bloqueado y exige corrección, revalidación y una nueva consolidación antes de que pueda volver a Validado y realizarse un nuevo intento de envío.
 
 ### 8.8. Trabajo prohibido dentro de la transacción
 
@@ -573,7 +575,7 @@ Se evaluaron tres alternativas dentro del stack Java seleccionado:
 | Independencia del Dominio | 5 | 4 | 5 | 5 |
 | Pruebas de integración | 3 | 5 | 5 | 5 |
 | Complejidad de configuración | 3 | 4 | 4 | 3 |
-| **Total ponderado** |  | **104** | **93** | **96** |
+| **Total ponderado** |  | **102** | **93** | **95** |
 
 Spring Data JPA se selecciona por:
 
@@ -713,33 +715,6 @@ Las versiones exactas quedarán registradas en:
 - documentación de desarrollo;
 - estrategia de despliegue.
 
----|---|
-| Motor relacional | [PENDIENTE DE ADR-0003] |
-| Adaptador de persistencia u ORM | [PENDIENTE DE ADR-0003] |
-| Herramienta de migraciones | [PENDIENTE DE ADR-0003] |
-| API transaccional | [PENDIENTE DE ADR-0003] |
-| Mecanismo de bloqueo de filas | [PENDIENTE DE ADR-0003] |
-| Nivel de aislamiento | [PENDIENTE DE VALIDACIÓN CON EL MOTOR] |
-| Política concreta de reintentos | [PENDIENTE DE IMPLEMENTACIÓN] |
-
-La ADR no puede pasar a **Aceptada** mientras estos elementos permanezcan pendientes.
-
-El motor seleccionado debe demostrar:
-
-- transacciones ACID locales;
-- claves foráneas y restricciones únicas;
-- bloqueo exclusivo de filas o mecanismo equivalente;
-- semántica verificable de espera y timeout;
-- migraciones reproducibles;
-- soporte operativo dentro del presupuesto del MVP.
-
-El adaptador seleccionado debe permitir:
-
-- separar modelos persistentes del Dominio;
-- participar en una transacción controlada por el caso de uso;
-- adquirir el bloqueo del cierre antes de leer sus dependencias;
-- ejecutar pruebas de integración contra el motor real;
-- propagar conflictos sin confirmar cambios parciales.
 
 ---
 
@@ -918,4 +893,4 @@ Esta decisión concuerda con:
 - la transición Validado a Bloqueado aprobada en ADR-0001;
 - la simplicidad operativa del MVP.
 
-El documento permanece como propuesta hasta completar su revisión final y fijar formalmente una versión soportada de PostgreSQL al iniciar la implementación.
+El documento permanece como propuesta hasta completar su revisión final. La versión mayor exacta de PostgreSQL se fijará al iniciar la implementación conforme a la política de versiones aprobada y no constituye una condición para aceptar esta ADR.
