@@ -1,8 +1,8 @@
 # ADR-0002: Estilo arquitectónico de la aplicación
 
-**Estado:** Propuesta
+**Estado:** Aceptada
 
-**Estado documental:** Borrador
+**Estado documental:** Línea base aprobada
 
 **Fecha:** 2026-07-14
 
