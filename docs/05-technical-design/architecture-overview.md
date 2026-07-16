@@ -4,7 +4,7 @@
 
 **Estado:** Candidata a línea base
 
-**Estado documental:** Revisión final pendiente
+**Estado documental:** Correcciones finales incorporadas; verificación del commit pendiente
 
 **Fase:** 05 — Diseño técnico
 
@@ -655,43 +655,46 @@ El módulo no conoce:
 ## 11. Diagrama de componentes
 
 ```mermaid
-sequenceDiagram
-    actor User as Usuario responsable
-    participant Web as Presentación
-    participant App as Aplicación
-    participant Tx as TransactionRunner
-    participant Repo as Adaptador JPA
-    participant Domain as Dominio
-    participant DB as PostgreSQL
+flowchart TB
+    Browser["Navegador web"]
+    Database[("PostgreSQL")]
+    Evidence["Almacenamiento físico de evidencias<br/>(pendiente)"]
 
-    User->>Web: Solicita enviar el cierre
-    Web->>App: sendClose(closeId, principal)
-    App->>Tx: execute(callback)
-    activate Tx
-    Tx->>App: ejecutar callback transaccional
+    subgraph Deployable["Unidad desplegable Spring Boot"]
+        subgraph Presentation["Presentación"]
+            Controllers["Controladores Spring MVC"]
+            Views["Vistas Thymeleaf"]
+            SecurityEntry["Filtros y adaptadores de entrada de seguridad"]
+        end
 
-    App->>Repo: bloquear Cierre Operativo
-    Repo->>DB: SELECT ... FOR UPDATE
-    App->>Repo: recargar estado evaluable
-    Repo->>DB: leer eventos, resultados, alertas y consolidación
-    App->>Domain: ejecutar VR-008
+        subgraph Closing["Gestión del Cierre Operativo"]
+            ClosingApplication["Aplicación<br/>Casos de uso + puertos + AuthenticatedPrincipal"]
+            ClosingDomain["Dominio<br/>Entidades + reglas + invariantes"]
+            ClosingInfrastructure["Adaptadores de Infraestructura<br/>JPA + TransactionRunner + reloj + evidencias"]
+        end
 
-    alt VR-008 falla
-        Domain-->>App: Fallida + causas
-        App->>Repo: guardar resultado y transición a Bloqueado
-        Repo->>DB: persistir rechazo y trazabilidad
-        App-->>Tx: resultado de negocio rechazado
-    else VR-008 satisfecha
-        Domain-->>App: Satisfecha
-        App->>Repo: guardar resultado, envío y transición terminal
-        Repo->>DB: persistir envío y trazabilidad
-        App-->>Tx: resultado de negocio exitoso
+        subgraph Identity["Identidad y Acceso"]
+            IdentityInfrastructure["Infraestructura y soporte<br/>Spring Security + sesión + credenciales"]
+        end
+
+        Assembly["Configuración y ensamblaje"]
+        Migrations["Migraciones Flyway"]
     end
 
-    Tx->>DB: COMMIT
-    deactivate Tx
-    Tx-->>App: resultado confirmado
-    App-->>Web: resultado del intento de envío
+    Browser --> Controllers
+    Browser --> SecurityEntry
+    SecurityEntry --> IdentityInfrastructure
+    IdentityInfrastructure -. "contexto autenticado" .-> Controllers
+    Controllers --> ClosingApplication
+    ClosingApplication --> ClosingDomain
+    ClosingInfrastructure -. "implementa puertos" .-> ClosingApplication
+    IdentityInfrastructure --> Database
+    ClosingInfrastructure --> Database
+    ClosingInfrastructure -. "implementa puerto" .-> Evidence
+    Migrations --> Database
+    Assembly --> Controllers
+    Assembly --> ClosingInfrastructure
+    Assembly --> IdentityInfrastructure
 ```
 
 Las flechas de implementación no permiten que Aplicación dependa de clases concretas de Infraestructura.
@@ -894,8 +897,11 @@ sequenceDiagram
 
     User->>Web: Solicita enviar el cierre
     Web->>App: sendClose(closeId, principal)
-    App->>Tx: execute()
-    Tx->>Repo: bloquear Cierre Operativo
+    App->>Tx: execute(callback)
+    activate Tx
+    Tx->>App: ejecutar callback transaccional
+
+    App->>Repo: bloquear Cierre Operativo
     Repo->>DB: SELECT ... FOR UPDATE
     App->>Repo: recargar estado evaluable
     Repo->>DB: leer eventos, resultados, alertas y consolidación
@@ -905,15 +911,18 @@ sequenceDiagram
         Domain-->>App: Fallida + causas
         App->>Repo: guardar resultado y transición a Bloqueado
         Repo->>DB: persistir rechazo y trazabilidad
-        Tx->>DB: COMMIT
-        App-->>Web: envío rechazado
+        App-->>Tx: resultado de negocio rechazado
     else VR-008 satisfecha
         Domain-->>App: Satisfecha
         App->>Repo: guardar resultado, envío y transición terminal
         Repo->>DB: persistir envío y trazabilidad
-        Tx->>DB: COMMIT
-        App-->>Web: envío confirmado
+        App-->>Tx: resultado de negocio exitoso
     end
+
+    Tx->>DB: COMMIT
+    deactivate Tx
+    Tx-->>App: resultado confirmado
+    App-->>Web: resultado del intento de envío
 ```
 
 ---
