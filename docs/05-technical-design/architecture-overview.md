@@ -2,7 +2,7 @@
 
 **Versión:** v0.1
 
-**Estado:** Candidata a línea base
+**Estado:** Línea base aprobada
 
 **Estado documental:** Correcciones finales incorporadas; verificación del commit pendiente
 
