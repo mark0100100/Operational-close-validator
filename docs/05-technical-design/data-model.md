@@ -2,9 +2,7 @@
 
 **Versión:** v0.1
 
-**Estado:** Candidata a línea base
-
-**Estado documental:** Correcciones finales incorporadas; revisión del diff y aprobación pendientes
+**Estado:** Línea base aprobada
 
 **Fase:** 05 — Diseño técnico
 
