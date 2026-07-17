@@ -4,7 +4,7 @@
 
 **Estado:** Candidata a línea base
 
-**Estado documental:** Versión final corregida; integración y revisión del diff pendientes
+**Estado documental:** Incorporada en el repositorio; revisión final y aprobación pendientes
 
 **Fase:** 05 — Diseño técnico
 
@@ -411,8 +411,9 @@ Para una referencia `stored:`, el adaptador:
 2. lee el contenido;
 3. recalcula SHA-256;
 4. compara el digest con el incluido en `content_reference`;
-5. deriva el MIME desde metadatos validados;
-6. entrega el contenido únicamente si todas las verificaciones son satisfactorias.
+5. obtiene el `Content-Type` desde la extensión segura incluida en `content_reference`;
+6. verifica que la extensión corresponda al catálogo permitido;
+7. entrega el contenido únicamente si todas las verificaciones son satisfactorias.
 
 Una discrepancia de digest:
 
@@ -458,7 +459,7 @@ La aplicación no cifra campos. En entornos públicos, PostgreSQL, Evidencias y 
 La aplicación no arranca cuando:
 
 - faltan username o hash;
-- el hash no usa un identificador soportado o `{bcrypt}` es inválido;
+- el hash no comienza con `{bcrypt}` o el valor BCrypt codificado es inválido;
 - `identity_user` contiene registros incompatibles;
 - timeout o limitador son inválidos;
 - la configuración de proxy es inválida;
