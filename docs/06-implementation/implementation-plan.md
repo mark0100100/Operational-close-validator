@@ -2,9 +2,7 @@
 
 **Versión:** v0.1
 
-**Estado:** Candidata a línea base
-
-**Estado documental:** Incorporada en el repositorio; revisión final y aprobación pendientes
+**Estado:** Línea base aprobada
 
 **Fase:** 06 — Implementación
 
