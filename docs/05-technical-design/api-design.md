@@ -1014,6 +1014,10 @@ La operación conserva ambos registros y deja uno solo activo para el flujo actu
 
 ### 12.4. Desactivar Autorización
 
+| Ruta | Método | Propósito |
+|---|---|---|
+| `/authorizations/{authorizationId}/deactivate` | `POST` | Retirar la Autorización vigente |
+
 El formulario envía únicamente:
 
 | Campo | Obligatorio |
