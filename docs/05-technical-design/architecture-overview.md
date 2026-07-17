@@ -4,8 +4,6 @@
 
 **Estado:** Línea base aprobada
 
-**Estado documental:** Correcciones finales incorporadas; verificación del commit pendiente
-
 **Fase:** 05 — Diseño técnico
 
 **Producto:** Operational Close Validator

@@ -4,7 +4,7 @@
 
 **Estado:** Candidata a línea base
 
-**Estado documental:** Verificada y coherente; incorporación y revisión del diff pendientes
+**Estado documental:** Correcciones finales incorporadas; revisión del diff y aprobación pendientes
 
 **Fase:** 05 — Diseño técnico
 
@@ -114,7 +114,7 @@ El contenido físico de las Evidencias de Soporte se resolverá mediante un dise
 3. Las entidades del Dominio no contienen anotaciones JPA.
 4. Los adaptadores realizan mapeo explícito entre persistencia y Dominio.
 5. Flyway es el único mecanismo de creación y evolución del esquema.
-6. Los Resultados de Validación son registros históricos inmutables.
+6. El contenido de evaluación de un Resultado de Validación es inmutable. Únicamente sus metadatos de vigencia pueden modificarse para registrar su invalidación.
 7. Las transiciones de estado son registros históricos inmutables.
 8. Los intentos de envío son registros históricos inmutables.
 9. El estado actual se conserva junto con su historial explícito.
@@ -200,7 +200,7 @@ Los períodos operativos utilizan:
 date
 ```
 
-### 5.4. Importes
+### 5.4. Importes y efecto sobre el saldo
 
 Los importes monetarios utilizan:
 
@@ -218,7 +218,38 @@ El código debe cumplir el formato de tres letras mayúsculas.
 
 Cada Cierre Operativo utiliza una sola moneda. Los Eventos Operativos heredan la moneda del cierre y no almacenan un código de moneda independiente.
 
-Los montos de eventos se almacenan como valores positivos. El efecto sobre la consolidación se determina mediante el tipo de evento.
+`amount` conserva siempre el valor nominal positivo del Evento Operativo.
+
+`balance_effect` conserva el efecto firmado y calculado sobre el saldo esperado. No es un valor libre ingresado por el usuario.
+
+Reglas:
+
+```text
+INCOME       → balance_effect = +amount
+EXPENSE      → balance_effect = -amount
+DISCOUNT     → balance_effect = -amount
+CANCELLATION → balance_effect = -balance_effect del evento revertido
+```
+
+Todo Evento Operativo de tipo `CANCELLATION` debe referenciar mediante `reversed_event_id` un Evento Operativo no cancelatorio del mismo Cierre Operativo.
+
+La Anulación revierte completamente el efecto del evento referenciado:
+
+```text
+amount = amount del evento revertido
+balance_effect = -balance_effect del evento revertido
+```
+
+Un evento distinto de `CANCELLATION` no puede informar `reversed_event_id`.
+
+Las fórmulas de consolidación son:
+
+```text
+expected_balance = initial_balance + suma(balance_effect)
+difference = actual_balance - expected_balance
+```
+
+Los totales por tipo conservan montos nominales positivos. `total_cancellation` no determina por sí solo el signo aplicado al saldo; ese signo se obtiene de `balance_effect`.
 
 ### 5.5. Texto
 
@@ -296,13 +327,14 @@ El límite de Aplicación valida que `AuthenticatedPrincipal.userId` corresponda
 
 ```mermaid
 erDiagram
-    IDENTITY_USER ||--o{ SECURITY_EVENT : registra
+    IDENTITY_USER o|--o{ SECURITY_EVENT : registra
 
-    OPERATIONAL_CLOSE ||--|{ OPERATIONAL_EVENT : contiene
+    OPERATIONAL_CLOSE ||--o{ OPERATIONAL_EVENT : contiene
     OPERATIONAL_CLOSE ||--o{ CLOSE_STATE_TRANSITION : registra
     OPERATIONAL_CLOSE ||--o{ CONSOLIDATION : consolida
     OPERATIONAL_CLOSE ||--o{ ACCOUNTING_SUBMISSION_ATTEMPT : intenta
 
+    OPERATIONAL_EVENT o|--o| OPERATIONAL_EVENT : revierte
     OPERATIONAL_EVENT ||--o{ SUPPORTING_EVIDENCE : respalda
     OPERATIONAL_EVENT ||--o{ EVENT_AUTHORIZATION : autoriza
     OPERATIONAL_EVENT ||--o{ EVENT_STATE_TRANSITION : registra
@@ -326,6 +358,14 @@ erDiagram
 ```
 
 Las relaciones polimórficas de `validation_result` y `alert` se implementan mediante dos claves foráneas opcionales y una restricción que exige exactamente una entidad afectada.
+
+La autorrelación de `operational_event` es condicional:
+
+- un Evento Operativo no cancelatorio puede ser revertido por cero o una Anulación;
+- una Anulación referencia exactamente un evento no cancelatorio;
+- ambos eventos pertenecen al mismo Cierre Operativo.
+
+`security_event.user_id` es opcional porque un intento fallido puede ocurrir antes de identificar un usuario válido.
 
 ---
 
@@ -597,7 +637,9 @@ Representar un movimiento registrado dentro de un cierre.
 | `id` | `uuid` | No | Identificador |
 | `close_id` | `uuid` | No | Cierre propietario |
 | `event_type` | `varchar(20)` | No | Tipo |
-| `amount` | `numeric(19,4)` | No | Monto positivo |
+| `amount` | `numeric(19,4)` | No | Monto nominal positivo |
+| `balance_effect` | `numeric(19,4)` | No | Efecto firmado calculado sobre el saldo esperado |
+| `reversed_event_id` | `uuid` | Sí | Evento revertido por una Anulación |
 | `occurred_at` | `timestamptz` | No | Ocurrencia |
 | `registered_at` | `timestamptz` | No | Registro en el sistema |
 | `responsible_name` | `varchar(200)` | No | Responsable de negocio informado |
@@ -614,23 +656,52 @@ Representar un movimiento registrado dentro de un cierre.
 | `updated_by_user_id` | `varchar(64)` | No | Usuario de modificación |
 | `updated_by_username` | `varchar(100)` | No | Nombre visible |
 
-### 13.3. Restricciones
+### 13.3. Restricciones estructurales
 
 - clave primaria: `id`;
 - clave foránea a `operational_close`;
+- clave foránea opcional de `reversed_event_id` a `operational_event`;
 - `amount > 0`;
+- `abs(balance_effect) = amount`;
 - tipo y estado permitidos;
 - `data_revision >= 1`;
 - actor estable `responsible-user`;
+- `reversed_event_id` es obligatorio cuando `event_type = CANCELLATION`;
+- `reversed_event_id` es nulo cuando `event_type <> CANCELLATION`;
+- un mismo evento solo puede ser objetivo de una Anulación;
 - no se puede crear ni modificar cuando el cierre está Enviado;
 - todo cambio relevante incrementa `data_revision`;
 - un evento pertenece exactamente a un cierre;
 - no existe eliminación física en el MVP.
 
-### 13.4. Cambios que incrementan `data_revision`
+### 13.4. Reglas semánticas de `balance_effect`
+
+Aplicación y Dominio garantizan:
+
+```text
+INCOME       → balance_effect = amount
+EXPENSE      → balance_effect = -amount
+DISCOUNT     → balance_effect = -amount
+CANCELLATION → balance_effect = -balance_effect del evento revertido
+```
+
+Para una Anulación:
+
+- `reversed_event_id` no puede referenciar al mismo evento;
+- el evento revertido pertenece al mismo cierre;
+- el evento revertido no es otra Anulación;
+- `amount` coincide con el monto del evento revertido;
+- la referencia ya existía al registrar la Anulación;
+- VR-006 continúa exigiendo autorización formal.
+
+La modificación de un evento ya referenciado por una Anulación obliga a recalcular la Anulación, incrementar su revisión e invalidar los Resultados de Validación y consolidaciones dependientes.
+
+### 13.5. Cambios que incrementan `data_revision`
 
 - tipo;
 - monto;
+- efecto sobre el saldo;
+- evento revertido;
 - fecha y hora de ocurrencia;
 - responsable;
 - descripción;
@@ -641,11 +712,12 @@ Representar un movimiento registrado dentro de un cierre.
 
 El incremento de revisión apoya trazabilidad e instantáneas; no reemplaza el bloqueo pesimista del cierre.
 
-### 13.5. Índices
+### 13.6. Índices
 
 - `idx_operational_event_close_state`;
 - `idx_operational_event_close_type`;
-- `idx_operational_event_close_occurred_at`.
+- `idx_operational_event_close_occurred_at`;
+- `uq_operational_event_reversed_event`, parcial y único por `reversed_event_id` cuando `event_type = 'CANCELLATION'`.
 
 ---
 
@@ -721,7 +793,8 @@ Conservar los metadatos y la referencia abstracta de una Evidencia de Soporte.
 - estado de legibilidad permitido;
 - `revision >= 1`;
 - `content_reference` no puede ser vacía;
-- `deactivated_at` es nulo cuando `is_active = true`;
+- `is_active = true` exige `deactivated_at` nulo;
+- `is_active = false` exige `deactivated_at` no nulo;
 - una modificación relevante invalida Resultados dependientes;
 - el contenido físico no se almacena en esta tabla.
 
@@ -765,7 +838,8 @@ Conservar una Autorización formal vinculada a un Evento Operativo.
 - `formal_reference` no puede ser vacía;
 - `reason` no puede ser vacía;
 - `revision >= 1`;
-- `deactivated_at` es nulo cuando `is_active = true`;
+- `is_active = true` exige `deactivated_at` nulo;
+- `is_active = false` exige `deactivated_at` no nulo;
 - una modificación relevante invalida Resultados dependientes.
 
 ### 16.4. Índices
@@ -835,7 +909,7 @@ rule_version
 
 Conservar cada evaluación de una regla sobre un Evento Operativo o Cierre Operativo.
 
-Los registros son inmutables.
+El contenido de la evaluación es inmutable. Únicamente los metadatos de vigencia pueden cambiar para registrar una invalidación posterior.
 
 ### 18.2. Columnas
 
@@ -852,27 +926,39 @@ Los registros son inmutables.
 | `evaluated_by_user_id` | `varchar(64)` | No | Actor |
 | `evaluated_by_username` | `varchar(100)` | No | Nombre visible |
 | `event_data_revision` | `bigint` | Sí | Revisión del evento evaluado |
-| `consolidation_id` | `uuid` | Sí | Consolidación evaluada por VR-008 |
+| `consolidation_id` | `uuid` | Sí | Consolidación evaluada, cuando existe |
 | `is_current` | `boolean` | No | Vigencia |
 | `invalidated_at` | `timestamptz` | Sí | Momento de invalidación |
 | `invalidation_reason` | `text` | Sí | Causa |
 
-### 18.3. Restricciones
+### 18.3. Restricciones estructurales
 
 - clave primaria: `id`;
 - clave foránea compuesta a `validation_rule`;
+- claves foráneas opcionales a Evento Operativo, Cierre Operativo y consolidación;
 - exactamente uno entre `event_id` y `close_id` debe ser no nulo;
-- una regla con alcance `EVENT` solo evalúa eventos;
-- una regla con alcance `CLOSE` solo evalúa cierres;
 - `event_data_revision` es obligatorio cuando se evalúa un evento;
-- `consolidation_id` es obligatorio para VR-008;
+- `event_data_revision` es nulo cuando se evalúa un cierre;
+- `consolidation_id` es obligatorio cuando VR-008 queda `SATISFIED`;
+- `consolidation_id` puede ser nulo cuando VR-008 queda `FAILED` por consolidación ausente;
 - `is_current = true` exige `invalidated_at` e `invalidation_reason` nulos;
 - `is_current = false` exige `invalidated_at` e `invalidation_reason` no nulos;
 - solo puede existir un resultado vigente por regla y entidad;
-- los resultados históricos no se actualizan salvo para marcar invalidación dentro de la misma operación que modifica su fuente;
-- `PENDING` no está permitido.
+- `PENDING` no está permitido en el MVP.
 
-### 18.4. Índices
+### 18.4. Reglas semánticas
+
+Aplicación y Dominio garantizan:
+
+- una regla con alcance `EVENT` solo evalúa Eventos Operativos;
+- una regla con alcance `CLOSE` solo evalúa Cierres Operativos;
+- cuando `consolidation_id` existe, pertenece al mismo cierre evaluado;
+- una VR-008 Satisfecha referencia una consolidación vigente;
+- una VR-008 Fallida por `CONSOLIDATION_MISSING` no referencia consolidación;
+- el resultado conserva la versión exacta de la regla aplicada;
+- un resultado de evento conserva la revisión exacta evaluada.
+
+### 18.5. Índices
 
 - `uq_validation_result_current_event_rule`, parcial por `event_id + rule_code` cuando `is_current = true`;
 - `uq_validation_result_current_close_rule`, parcial por `close_id + rule_code` cuando `is_current = true`;
@@ -881,7 +967,7 @@ Los registros son inmutables.
 - `idx_validation_result_rule_outcome`;
 - `idx_validation_result_evaluated_at`.
 
-### 18.5. Regla de inmutabilidad
+### 18.6. Regla de inmutabilidad
 
 Después de crear un resultado solo pueden cambiar:
 
@@ -897,7 +983,8 @@ No se modifica retroactivamente:
 - detalle;
 - fecha;
 - actor;
-- revisión de datos.
+- revisión de datos;
+- consolidación evaluada.
 
 ---
 
@@ -920,7 +1007,7 @@ Representar la inconsistencia visible y su estado actual.
 | `is_blocking` | `boolean` | No | Efecto bloqueante |
 | `state` | `varchar(20)` | No | Estado actual |
 | `detail` | `text` | No | Descripción |
-| `resolved_by_validation_result_id` | `uuid` | Sí | Revalidación exitosa |
+| `resolved_by_validation_result_id` | `uuid` | Sí | Revalidación que autorizó la resolución |
 | `discard_justification` | `text` | Sí | Justificación |
 | `created_at` | `timestamptz` | No | Creación |
 | `created_by_user_id` | `varchar(64)` | No | Actor |
@@ -936,12 +1023,13 @@ Representar la inconsistencia visible y su estado actual.
 - si `state = RESOLVED`, `resolved_by_validation_result_id` y `closed_at` son obligatorios;
 - si `state = DISCARDED`, `discard_justification` no vacía y `closed_at` son obligatorios;
 - si la Alerta no es terminal, `closed_at` debe ser nulo;
-- una Alerta Resuelta requiere un resultado vigente y Satisfecho sobre la misma entidad;
+- al transicionar a `RESOLVED`, el resultado asociado debe estar vigente, Satisfecho y evaluar la misma entidad;
+- una invalidación posterior del resultado no reescribe la resolución histórica de la Alerta;
 - una Alerta Descartada no valida automáticamente la entidad;
 - una Alerta terminal no se reabre; una nueva inconsistencia genera una nueva Alerta;
 - no se elimina físicamente.
 
-La comprobación de que el resultado de resolución es `SATISFIED`, vigente y compatible con la entidad se ejecuta en el Dominio y se verifica mediante prueba de integración.
+La comprobación de que el resultado de resolución era `SATISFIED`, vigente y compatible con la entidad en el momento de la transición se ejecuta en el Dominio y se verifica mediante prueba de integración.
 
 ### 19.4. Índices
 
@@ -1006,12 +1094,12 @@ Conservar una consolidación histórica del cierre y su vigencia.
 | `close_id` | `uuid` | No | Cierre |
 | `currency_code` | `char(3)` | No | Moneda |
 | `event_count` | `integer` | No | Eventos incluidos |
-| `total_income` | `numeric(19,4)` | No | Total Ingreso |
-| `total_expense` | `numeric(19,4)` | No | Total Egreso |
-| `total_discount` | `numeric(19,4)` | No | Total Descuento |
-| `total_cancellation` | `numeric(19,4)` | No | Total Anulación |
+| `total_income` | `numeric(19,4)` | No | Total nominal de Ingresos |
+| `total_expense` | `numeric(19,4)` | No | Total nominal de Egresos |
+| `total_discount` | `numeric(19,4)` | No | Total nominal de Descuentos |
+| `total_cancellation` | `numeric(19,4)` | No | Total nominal de Anulaciones |
 | `initial_balance` | `numeric(19,4)` | No | Saldo inicial utilizado |
-| `expected_balance` | `numeric(19,4)` | No | Saldo esperado |
+| `expected_balance` | `numeric(19,4)` | No | Saldo esperado calculado |
 | `actual_balance` | `numeric(19,4)` | No | Saldo real informado |
 | `difference` | `numeric(19,4)` | No | Diferencia calculada |
 | `is_current` | `boolean` | No | Vigencia |
@@ -1021,20 +1109,54 @@ Conservar una consolidación histórica del cierre y su vigencia.
 | `invalidated_at` | `timestamptz` | Sí | Invalidación |
 | `invalidation_reason` | `text` | Sí | Causa |
 
-### 21.3. Restricciones
+### 21.3. Restricciones estructurales
 
 - clave primaria: `id`;
 - clave foránea a `operational_close`;
 - `event_count >= 1`;
-- totales e importes no negativos, salvo `difference`, que puede ser negativa;
+- `total_income`, `total_expense`, `total_discount` y `total_cancellation` son no negativos;
+- `initial_balance >= 0`;
+- `actual_balance >= 0`;
+- `expected_balance` y `difference` pueden ser negativos;
 - `currency_code` coincide con la moneda del cierre;
 - solo puede existir una consolidación vigente por cierre;
-- una consolidación vigente no tiene campos de invalidación;
-- una consolidación no vigente conserva causa y fecha;
+- `is_current = true` exige `invalidated_at` e `invalidation_reason` nulos;
+- `is_current = false` exige `invalidated_at` e `invalidation_reason` no nulos;
 - registros históricos no se eliminan;
 - el cierre solo puede quedar `VALIDATED` con una consolidación vigente.
 
-### 21.4. Índices
+### 21.4. Fórmulas y consistencia
+
+Los totales por tipo se calculan con el monto nominal:
+
+```text
+total_income       = suma(amount donde event_type = INCOME)
+total_expense      = suma(amount donde event_type = EXPENSE)
+total_discount     = suma(amount donde event_type = DISCOUNT)
+total_cancellation = suma(amount donde event_type = CANCELLATION)
+```
+
+El saldo se calcula con el efecto firmado:
+
+```text
+expected_balance = initial_balance + suma(balance_effect)
+difference = actual_balance - expected_balance
+```
+
+Las fórmulas utilizan exclusivamente las filas de `consolidation_event_snapshot`.
+
+Aplicación garantiza, dentro de la transacción:
+
+- que todos y solo los Eventos Operativos vigentes del cierre estén incluidos;
+- que todos los eventos estén Validados;
+- que `event_count` coincida con la cantidad de snapshots;
+- que los totales y saldos coincidan con los snapshots;
+- que no existan Alertas bloqueantes activas;
+- que todos los Resultados aplicables estén vigentes y satisfechos.
+
+Una falla de VR-008 invalida la consolidación evaluada, cuando existe, porque el cierre requiere una nueva consolidación antes de volver a Validado.
+
+### 21.5. Índices
 
 - `uq_consolidation_current_close`, parcial por `close_id` cuando `is_current = true`;
 - `idx_consolidation_close_completed_at`.
@@ -1066,26 +1188,43 @@ event_id
 | `event_id` | `uuid` | No | Evento incluido |
 | `event_data_revision` | `bigint` | No | Revisión utilizada |
 | `event_type` | `varchar(20)` | No | Tipo capturado |
-| `amount` | `numeric(19,4)` | No | Monto capturado |
+| `amount` | `numeric(19,4)` | No | Monto nominal capturado |
+| `balance_effect` | `numeric(19,4)` | No | Efecto firmado capturado |
+| `reversed_event_id` | `uuid` | Sí | Evento revertido capturado |
 | `event_state` | `varchar(30)` | No | Debe ser `VALIDATED` |
 | `captured_at` | `timestamptz` | No | Momento de captura |
 
-### 22.4. Restricciones
+### 22.4. Restricciones estructurales
 
 - claves foráneas a consolidación y evento;
+- clave foránea opcional de `reversed_event_id` a Evento Operativo;
 - `event_data_revision >= 1`;
 - `amount > 0`;
+- `abs(balance_effect) = amount`;
 - `event_state = VALIDATED`;
-- todos los eventos pertenecen al mismo cierre de la consolidación;
-- la cantidad de filas coincide con `consolidation.event_count`;
-- los totales coinciden con las filas capturadas.
+- `reversed_event_id` es obligatorio para `CANCELLATION`;
+- `reversed_event_id` es nulo para los demás tipos;
+- las filas son append-only.
+
+### 22.5. Reglas semánticas
+
+Aplicación garantiza:
+
+- que todos los eventos pertenecen al mismo cierre de la consolidación;
+- que la revisión capturada coincide con la revisión evaluada;
+- que el efecto firmado respeta el tipo del evento;
+- que una Anulación conserva la referencia y el efecto del evento revertido;
+- que la cantidad de filas coincide con `consolidation.event_count`;
+- que los totales nominales coinciden con las filas capturadas;
+- que `expected_balance` y `difference` cumplen las fórmulas aprobadas.
 
 Las comprobaciones que atraviesan varias tablas se ejecutan en el caso de uso transaccional y se prueban contra PostgreSQL.
 
-### 22.5. Índices
+### 22.6. Índices
 
 - clave primaria compuesta;
-- `idx_consolidation_snapshot_event`.
+- `idx_consolidation_snapshot_event`;
+- `idx_consolidation_snapshot_reversed_event`.
 
 ---
 
@@ -1100,7 +1239,8 @@ Un intento rechazado se confirma junto con:
 - VR-008 Fallida;
 - transición del cierre a Bloqueado;
 - causas;
-- trazabilidad.
+- trazabilidad;
+- invalidación de la consolidación evaluada, cuando existe.
 
 Un intento exitoso se confirma junto con:
 
@@ -1115,29 +1255,43 @@ Un intento exitoso se confirma junto con:
 | `id` | `uuid` | No | Identificador |
 | `close_id` | `uuid` | No | Cierre |
 | `vr008_result_id` | `uuid` | No | Resultado de VR-008 |
-| `consolidation_id` | `uuid` | No | Consolidación evaluada |
+| `consolidation_id` | `uuid` | Sí | Consolidación evaluada, cuando existe |
 | `outcome` | `varchar(15)` | No | Resultado |
 | `attempted_at` | `timestamptz` | No | Momento |
 | `attempted_by_user_id` | `varchar(64)` | No | Actor |
 | `attempted_by_username` | `varchar(100)` | No | Nombre visible |
 | `summary` | `text` | Sí | Resumen sanitizado |
 
-### 23.3. Restricciones
+### 23.3. Restricciones estructurales
 
 - clave primaria: `id`;
-- claves foráneas a cierre, Resultado de Validación y consolidación;
+- claves foráneas a cierre y Resultado de Validación;
+- clave foránea opcional a consolidación;
 - `vr008_result_id` único;
-- el resultado referenciado corresponde a `VR-008`, al mismo cierre y a la misma consolidación;
-- `SUCCEEDED` exige Resultado `SATISFIED`;
-- `REJECTED` exige Resultado `FAILED`;
+- resultado permitido `SUCCEEDED` o `REJECTED`;
+- `consolidation_id` es obligatorio cuando `outcome = SUCCEEDED`;
+- `consolidation_id` puede ser nulo cuando `outcome = REJECTED`;
 - solo puede existir un intento `SUCCEEDED` por cierre;
-- un intento exitoso exige transición a `SENT_TO_ACCOUNTING`;
-- un intento rechazado exige transición a `BLOCKED`;
 - registros append-only.
+
+### 23.4. Reglas semánticas
+
+Aplicación garantiza:
+
+- que el resultado referenciado corresponde a `VR-008` y al mismo cierre;
+- que `SUCCEEDED` exige Resultado `SATISFIED`;
+- que `REJECTED` exige Resultado `FAILED`;
+- que una consolidación referenciada pertenece al mismo cierre;
+- que el intento exitoso referencia la misma consolidación que VR-008;
+- que un intento exitoso produce la transición a `SENT_TO_ACCOUNTING`;
+- que un intento rechazado produce o conserva la transición a `BLOCKED`;
+- que un rechazo contiene al menos una causa estructurada;
+- que un rechazo sin consolidación registra `CONSOLIDATION_MISSING`;
+- que un rechazo con consolidación invalida esa consolidación.
 
 Las relaciones semánticas entre resultado, cierre y consolidación se validan en el caso de uso y mediante pruebas de integración.
 
-### 23.4. Índices
+### 23.5. Índices
 
 - `uq_submission_success_close`, parcial por `close_id` cuando `outcome = 'SUCCEEDED'`;
 - `uq_submission_vr008_result`;
@@ -1163,7 +1317,7 @@ Conservar las causas y entidades afectadas que explican un rechazo de VR-008.
 | `alert_id` | `uuid` | Sí | Alerta afectada |
 | `validation_result_id` | `uuid` | Sí | Resultado afectado |
 | `consolidation_id` | `uuid` | Sí | Consolidación afectada |
-| `detail` | `text` | No | Explicación |
+| `detail` | `text` | No | Explicación no vacía |
 
 Tipos iniciales:
 
@@ -1175,21 +1329,36 @@ Tipos iniciales:
 - `CONSOLIDATION_STALE`;
 - `OTHER_CRITICAL_INCONSISTENCY`.
 
-### 24.3. Restricciones
+### 24.3. Restricciones estructurales
 
 - clave primaria: `id`;
 - clave foránea al intento;
-- el intento debe ser `REJECTED`;
-- al menos una referencia afectada o un detalle no vacío;
-- las entidades referenciadas pertenecen al mismo cierre;
+- claves foráneas opcionales a Evento, Alerta, Resultado y consolidación;
+- `issue_type` pertenece al catálogo aprobado;
+- `detail` no puede estar vacío;
 - registros append-only.
 
-### 24.4. Índices
+### 24.4. Reglas semánticas
+
+Aplicación garantiza:
+
+- que el intento relacionado es `REJECTED`;
+- que las entidades referenciadas pertenecen al mismo cierre;
+- `EVENT_NOT_VALIDATED` referencia `event_id`;
+- `BLOCKING_ALERT` referencia `alert_id`;
+- `VALIDATION_RESULT_FAILED` y `VALIDATION_RESULT_STALE` referencian `validation_result_id`;
+- `CONSOLIDATION_STALE` referencia `consolidation_id`;
+- `CONSOLIDATION_MISSING` no referencia una consolidación inexistente;
+- `OTHER_CRITICAL_INCONSISTENCY` conserva detalle suficiente aunque no exista una referencia específica;
+- todo intento rechazado contiene al menos una fila.
+
+### 24.5. Índices
 
 - `idx_submission_issue_attempt`;
 - `idx_submission_issue_event`;
 - `idx_submission_issue_alert`;
-- `idx_submission_issue_validation_result`.
+- `idx_submission_issue_validation_result`;
+- `idx_submission_issue_consolidation`.
 
 ---
 
@@ -1197,7 +1366,9 @@ Tipos iniciales:
 
 | Relación | Cardinalidad |
 |---|---|
-| Cierre → Evento | Uno a uno o más |
+| Cierre → Evento | Uno a cero o más persistidos; uno o más para consolidar, validar o enviar |
+| Evento original → Anulación | Uno a cero o una |
+| Anulación → Evento original | Uno obligatorio |
 | Evento → Evidencia | Uno a cero o más |
 | Evento → Autorización | Uno a cero o más |
 | Regla → Resultado | Uno a cero o más |
@@ -1210,43 +1381,50 @@ Tipos iniciales:
 | Cierre → Consolidación | Uno a cero o más históricas |
 | Consolidación → Snapshot | Uno a uno o más |
 | Cierre → Intento de envío | Uno a cero o más |
+| Resultado VR-008 → Intento de envío | Uno a cero o uno |
 | Intento rechazado → Issue | Uno a uno o más |
 | Cierre → Transición | Uno a uno o más |
 | Evento → Transición | Uno a uno o más |
-| Usuario → Evento de seguridad | Uno a cero o más |
+| Usuario → Evento de seguridad | Uno a cero o más; el evento puede no identificar usuario |
 
-Aunque conceptualmente un cierre contiene uno o más eventos, la base puede conservar temporalmente un cierre sin eventos durante Preparación. La condición de uno o más se exige para consolidar, validar y enviar.
+La base puede conservar temporalmente un Cierre Operativo sin eventos durante Preparación. La condición de uno o más se exige para consolidar, validar y enviar.
 
 ---
 
-## 26. Reglas de integridad aplicadas por la base
+## 26. Reglas de integridad aplicadas directamente por PostgreSQL
 
-La base aplica directamente:
+La base aplica mediante claves, restricciones e índices:
 
 1. claves primarias;
 2. claves foráneas;
 3. nulabilidad;
 4. tipos y longitudes;
-5. códigos de estados permitidos;
-6. códigos de tipos permitidos;
-7. montos positivos;
+5. códigos de estados, tipos, resultados y causas permitidos;
+6. montos nominales positivos;
+7. `abs(balance_effect) = amount`;
 8. períodos válidos;
-9. una versión actual por regla;
-10. un resultado vigente por regla y entidad;
-11. una consolidación vigente por cierre;
-12. un solo envío exitoso por cierre;
-13. exactamente una entidad evaluada por Resultado;
-14. exactamente una entidad afectada por Alerta;
-15. justificación obligatoria para Alerta Descartada;
-16. resultado asociado para Alerta Resuelta;
-17. inmutabilidad estructural mediante ausencia de operaciones de actualización en adaptadores históricos;
-18. integridad de snapshots;
-19. unicidad del usuario preconfigurado;
-20. no persistencia de estados fuera del MVP.
+9. formato estructural de moneda;
+10. una versión actual por regla;
+11. un resultado vigente por regla y entidad;
+12. una consolidación vigente por cierre;
+13. un solo envío exitoso por cierre;
+14. exactamente una entidad evaluada por Resultado;
+15. exactamente una entidad afectada por Alerta;
+16. presencia de justificación para Alerta Descartada;
+17. presencia de resultado asociado para Alerta Resuelta;
+18. equivalencia entre `is_current` y los campos de invalidación;
+19. equivalencia entre `is_active` y `deactivated_at`;
+20. nulabilidad de `reversed_event_id` según el tipo de evento;
+21. un único evento de Anulación por evento revertido;
+22. nulabilidad de la consolidación según el resultado del intento;
+23. unicidad y valor fijo del usuario `responsible-user`;
+24. exclusión de estados fuera del MVP.
+
+PostgreSQL no sustituye las reglas que requieren comparar varias filas, interpretar estados históricos o coordinar una operación completa.
 
 ---
 
-## 27. Reglas que permanecen en Dominio o Aplicación
+## 27. Reglas que permanecen en Dominio, Aplicación o adaptadores
 
 No pueden expresarse completamente mediante una sola restricción relacional:
 
@@ -1254,21 +1432,32 @@ No pueden expresarse completamente mediante una sola restricción relacional:
 2. un cierre solo queda Validado cuando todos sus eventos están Validados;
 3. un cierre Validado no tiene Alertas bloqueantes activas;
 4. un cierre Validado posee consolidación vigente;
-5. una Alerta Resuelta referencia una revalidación satisfecha, vigente y compatible;
-6. una Alerta Descartada no elimina otras condiciones bloqueantes;
-7. VR-008 evalúa el estado recargado después de adquirir el bloqueo;
-8. el resultado de VR-008 corresponde a la misma consolidación e intento;
-9. una falla de VR-008 confirma Bloqueado y su trazabilidad;
-10. una falla de VR-008 no genera un envío exitoso;
-11. una operación relevante incrementa la revisión del evento;
-12. una modificación relevante invalida resultados y consolidaciones dependientes;
-13. una consolidación incluye todos y solo los eventos vigentes del cierre;
-14. los totales coinciden con sus snapshots;
-15. todos los actores corresponden al principal autenticado;
-16. ninguna operación modifica un cierre Enviado;
-17. toda ruta de escritura bloquea primero la fila del cierre.
+5. una Alerta solo transiciona a Resuelta cuando la revalidación asociada está Satisfecha, vigente y evalúa la misma entidad en ese momento;
+6. una invalidación posterior no reescribe la resolución histórica de una Alerta;
+7. una Alerta Descartada no elimina otras condiciones bloqueantes;
+8. el alcance de una Regla coincide con la entidad evaluada;
+9. VR-008 evalúa el estado recargado después de adquirir el bloqueo;
+10. el resultado de VR-008 corresponde al mismo cierre, intento y consolidación cuando esta existe;
+11. una falla de VR-008 confirma Bloqueado y su trazabilidad;
+12. una falla de VR-008 no genera un envío exitoso;
+13. una falla de VR-008 invalida la consolidación evaluada cuando existe;
+14. un rechazo sin consolidación registra `CONSOLIDATION_MISSING`;
+15. todo intento rechazado contiene al menos una causa;
+16. una operación relevante incrementa la revisión del evento;
+17. una modificación relevante invalida Resultados y consolidaciones dependientes;
+18. una consolidación incluye todos y solo los eventos vigentes del cierre;
+19. `event_count`, totales, saldo esperado y diferencia coinciden con sus snapshots;
+20. una Anulación referencia un evento no cancelatorio del mismo cierre;
+21. una Anulación revierte completamente el efecto firmado del evento referenciado;
+22. modificar un evento revertido obliga a recalcular la Anulación dependiente;
+23. el estado actual coincide con la última transición persistida;
+24. todos los actores corresponden al principal autenticado;
+25. ninguna operación modifica un cierre Enviado;
+26. toda ruta de escritura bloquea primero la fila del cierre;
+27. los registros append-only no se actualizan ni eliminan mediante los adaptadores;
+28. las operaciones entre tablas relacionadas se confirman o revierten como una unidad.
 
-Estas reglas se prueban en Dominio, Aplicación e integración según corresponda.
+Estas reglas se prueban en Dominio, Aplicación, adaptadores e integración según corresponda.
 
 ---
 
@@ -1444,8 +1633,8 @@ V1__create_identity_tables.sql
 V2__create_validation_rule_catalog.sql
 V3__create_operational_close_and_event_tables.sql
 V4__create_evidence_and_authorization_tables.sql
-V5__create_validation_and_alert_tables.sql
-V6__create_consolidation_tables.sql
+V5__create_consolidation_tables.sql
+V6__create_validation_and_alert_tables.sql
 V7__create_submission_tables.sql
 V8__create_state_transition_tables.sql
 V9__create_indexes_and_constraints.sql
@@ -1528,13 +1717,20 @@ Debe verificarse el rechazo de:
 - evento sin cierre;
 - período inválido;
 - monto no positivo;
+- efecto de saldo cuya magnitud no coincida con el monto;
+- Anulación sin evento revertido;
+- evento no cancelatorio con `reversed_event_id`;
+- dos Anulaciones sobre el mismo evento;
 - estado fuera del catálogo;
 - resultado con dos entidades o ninguna;
 - dos resultados vigentes para la misma regla y entidad;
 - alerta sin entidad afectada;
 - alerta descartada sin justificación;
 - alerta resuelta sin resultado;
+- evidencia o Autorización inactiva sin fecha de desactivación;
 - dos consolidaciones vigentes;
+- intento exitoso sin consolidación;
+- intento rechazado sin causa;
 - dos envíos exitosos;
 - usuario distinto de `responsible-user`.
 
@@ -1547,6 +1743,7 @@ Debe verificarse:
 - actor y fecha en toda acción relevante;
 - invalidación histórica;
 - snapshot de consolidación;
+- referencia y efecto de una Anulación;
 - causas de rechazo;
 - no modificación de registros append-only.
 
@@ -1570,7 +1767,11 @@ Debe verificarse:
 - evento Validado solo con resultados satisfechos y vigentes;
 - alerta Resuelta solo con revalidación exitosa;
 - cierre Validado solo con eventos Validados y consolidación vigente;
-- VR-008 fallida confirma Bloqueado;
+- `expected_balance = initial_balance + suma(balance_effect)`;
+- `difference = actual_balance - expected_balance`;
+- una Anulación revierte exactamente el efecto del evento referenciado;
+- VR-008 fallida confirma Bloqueado e invalida la consolidación existente;
+- VR-008 fallida por consolidación ausente se registra sin una clave foránea inexistente;
 - VR-008 satisfecha confirma envío terminal;
 - una modificación invalida resultado y consolidación;
 - un cierre enviado rechaza toda mutación.
@@ -1607,24 +1808,30 @@ El modelo puede aprobarse como línea base cuando:
 3. excluye estados y reglas fuera del MVP;
 4. mantiene el catálogo fijo y versionado;
 5. diferencia estado actual e historial;
-6. conserva vigencia de resultados y consolidaciones;
-7. permite reconstruir una consolidación;
-8. permite registrar intentos exitosos y rechazados;
-9. impide dos envíos exitosos;
-10. registra causas y entidades afectadas por VR-008;
-11. mantiene una sola moneda por cierre;
-12. diferencia responsable de negocio y usuario autenticado;
-13. mantiene el usuario `responsible-user`;
-14. no persiste sesiones;
-15. no incorpora secretos a migraciones;
-16. mantiene separación entre Dominio y JPA;
-17. respeta propiedad lógica por módulo;
-18. utiliza el cierre como puerta de concurrencia;
-19. no introduce eliminación funcional;
-20. sus restricciones se prueban contra PostgreSQL;
-21. no amplía el alcance del MVP;
-22. no asume almacenamiento físico de evidencias;
-23. se incorpora al repositorio mediante revisión.
+6. conserva vigencia de Resultados y consolidaciones;
+7. permite reconstruir una consolidación mediante snapshots;
+8. define de forma determinista `balance_effect`;
+9. define las fórmulas de saldo esperado y diferencia;
+10. una Anulación referencia y revierte exactamente un evento del mismo cierre;
+11. permite registrar intentos exitosos y rechazados;
+12. representa un rechazo por consolidación ausente sin una referencia imposible;
+13. impide dos envíos exitosos;
+14. registra causas y entidades afectadas por VR-008;
+15. exige una nueva consolidación después de una falla de VR-008;
+16. mantiene una sola moneda por cierre;
+17. diferencia responsable de negocio y usuario autenticado;
+18. mantiene el usuario `responsible-user`;
+19. no persiste sesiones;
+20. no incorpora secretos a migraciones;
+21. mantiene separación entre Dominio y JPA;
+22. respeta propiedad lógica por módulo;
+23. utiliza el cierre como puerta de concurrencia;
+24. no introduce eliminación funcional;
+25. asigna correctamente qué reglas aplica PostgreSQL y cuáles permanecen en Dominio o Aplicación;
+26. prueba restricciones y concurrencia contra PostgreSQL;
+27. no amplía el alcance funcional del MVP;
+28. no asume almacenamiento físico de evidencias;
+29. se incorpora al repositorio mediante revisión del diff.
 
 ---
 
@@ -1655,7 +1862,7 @@ El modelo conserva:
 
 - estado actual;
 - historial explícito;
-- resultados inmutables;
+- contenido de evaluación inmutable y vigencia explícita;
 - vigencia;
 - snapshots de consolidación;
 - intentos de envío;
