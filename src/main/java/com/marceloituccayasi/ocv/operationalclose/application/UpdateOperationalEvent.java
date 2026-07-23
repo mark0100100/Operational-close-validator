@@ -220,10 +220,10 @@ public final class UpdateOperationalEvent {
         }
 
         Optional<OperationalEvent> dependentCancellation =
-        eventRevisionRepository
-                .findCancellationByReversedEventIdForUpdate(
-                        input.closeId(),
-                        currentEvent.id());
+                eventRevisionRepository
+                        .findCancellationByReversedEventIdForUpdate(
+                                input.closeId(),
+                                currentEvent.id());
 
         Instant revisedAt =
                 Objects.requireNonNull(
@@ -263,10 +263,10 @@ public final class UpdateOperationalEvent {
                 }
 
                 Optional<OperationalEvent> reversedEvent =
-                eventRevisionRepository
-                .findByIdForUpdate(
-                        input.closeId(),
-                        input.reversedEventId());
+                        eventRevisionRepository
+                                .findByIdForUpdate(
+                                        input.closeId(),
+                                        input.reversedEventId());
 
                 if (reversedEvent.isEmpty()) {
                     return UpdateOperationalEventResult
@@ -277,11 +277,11 @@ public final class UpdateOperationalEvent {
                         reversedEvent.orElseThrow();
 
                 Optional<OperationalEvent>
-                    existingCancellation =
-                            eventRevisionRepository
-                            .findCancellationByReversedEventIdForUpdate(
-                                    input.closeId(),
-                                    lockedReversedEvent.id());
+                        existingCancellation =
+                                eventRevisionRepository
+                                        .findCancellationByReversedEventIdForUpdate(
+                                                input.closeId(),
+                                                lockedReversedEvent.id());
 
                 if (existingCancellation.isPresent()
                         && !existingCancellation

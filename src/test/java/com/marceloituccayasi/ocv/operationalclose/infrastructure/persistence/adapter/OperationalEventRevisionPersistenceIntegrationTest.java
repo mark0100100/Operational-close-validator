@@ -102,6 +102,82 @@ class OperationalEventRevisionPersistenceIntegrationTest {
     }
 
     @Test
+    void locksAndPersistsRegularEventRevision() {
+        OperationalEvent originalEvent =
+                originalExpense(
+                        "80.0000");
+
+        persistNewEvent(
+                originalEvent,
+                ORIGINAL_TRANSITION_ID);
+
+        transactionRunner.execute(
+                () -> {
+                    OperationalEvent lockedEvent =
+                            revisionRepository
+                                    .findByIdForUpdate(
+                                            new OperationalCloseId(
+                                                    CLOSE_ID),
+                                            originalEvent.id())
+                                    .orElseThrow();
+
+                    OperationalEvent revisedEvent =
+                            lockedEvent.reviseRegular(
+                                    OperationalEventType.EXPENSE,
+                                    new OperationalEventAmount(
+                                            new BigDecimal(
+                                                    "95.5000")),
+                                    REVISED_AT.minusSeconds(300),
+                                    "Caja revisada",
+                                    "Gasto operativo revisado",
+                                    false,
+                                    false,
+                                    REVISED_AT,
+                                    actor());
+
+                    revisionRepository.saveRevision(
+                            revisedEvent);
+                });
+
+        OperationalEvent persistedEvent =
+                transactionRunner.execute(
+                        () -> eventRepository
+                                .findById(
+                                        originalEvent.id())
+                                .orElseThrow());
+
+        assertThat(persistedEvent.id())
+                .isEqualTo(
+                        originalEvent.id());
+
+        assertThat(persistedEvent.eventType())
+                .isEqualTo(
+                        OperationalEventType.EXPENSE);
+
+        assertThat(persistedEvent.amount().value())
+                .isEqualByComparingTo(
+                        "95.5000");
+
+        assertThat(persistedEvent.balanceEffect())
+                .isEqualByComparingTo(
+                        "-95.5000");
+
+        assertThat(persistedEvent.dataRevision())
+                .isEqualTo(2L);
+
+        assertThat(persistedEvent.updatedAt())
+                .isEqualTo(REVISED_AT);
+
+        assertThat(persistedEvent.updatedBy())
+                .isEqualTo(actor());
+
+        assertThat(
+                countRows(
+                        "ocv.event_state_transition"))
+                .isEqualTo(1L);
+    }
+
+    @Test
     void closeScopedLocksDoNotReturnEventsFromAnotherClose() {
         OperationalEvent originalEvent =
                 originalExpense(
